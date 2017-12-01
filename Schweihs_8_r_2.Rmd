@@ -1,0 +1,39 @@
+---
+title: "Schweihs_8_r_2"
+author: "Maggie Schweihs"
+date: "10/28/2016"
+output: pdf_document
+
+---
+*In Homework 7, we wrote a Python function that counted the lengths of words in the 1770 essay by “A Mourner”.  Analysis of other articles published in The Boston Gazette and Country Journal in early 1770 finds that John Hancock wrote a 121-word article with a mean word length of 4.69 and standard deviation of 2.60. *
+```{r, message = FALSE}
+library(BSDA)
+```
+```{r}
+#The ourput of part 1(b) assignment 7
+mourner <- c(3, 7, 8, 3, 7, 3, 3, 6, 2, 3, 3, 2, 3, 4, 3, 8, 10, 2, 3, 1, 7, 4, 2, 10, 6, 3, 4, 9, 3, 6, 4, 2, 4, 2, 6, 4, 3, 7, 5, 2, 5, 4, 8, 11, 2, 6, 4, 4, 3, 3, 7, 2, 7, 3, 4, 2, 11, 2, 6, 5, 4, 8, 2, 3, 7, 2, 4, 6, 4, 3, 5, 6, 2, 3, 5, 10, 5, 6, 5, 4, 8, 8, 7, 2, 3, 8, 7, 2, 3, 6, 3, 6, 2, 3, 9, 3, 6, 4, 3, 3, 7, 3, 5, 2, 9, 3, 8, 8, 2, 6, 4, 3, 4, 5, 2, 3, 3, 4, 2, 7, 5, 6, 8, 4, 3, 7, 6, 6, 5, 2, 3, 6, 12, 6, 6, 2, 5, 5, 5, 6, 2, 5, 2, 3, 1, 7, 6, 3, 5, 4, 4, 1, 6, 3, 1, 7)
+```
+Test whether "A Mourner" and Hancock's letters in the article to the Boston Gazette in 1770 have the same mean word length. Accepting the null hypothesis would imply that it *is* plausible that Hancock was "A Mourner."
+
+###Null and Alternative Hypothesis:
+
+**Null Hypothesis:** The mean word length in "A Mourner"" is the same as the mean word length of the article to the Boston Gazette. 
+
+**Alternative Hypothesis:** The mean word length in "A Mourner" is not the same as the mean word length of the article to the Boston Gazette.
+
+That is, 
+
+H(null) : mu(Hancock) = mu(Mourner)  
+
+H(Alt) : mu(Hancock) != mu(Mourner)
+```{r}
+#Two-sided t-test using BSDA tsum.test() function
+#alpha = 0.05
+tsum.test(mean(mourner), sd(mourner), length(mourner), 4.69, 2.60, 121, alternative = "two.sided", mu = 0, conf.level = .95)
+```
+###Conclusion
+Since the p-value is greater than alpha = 0.05 (p=0.8709), we fail to reject the null hypothesis. The result is non-significant and it *is* plausible that John Hancock wrote "The Mourner."
+
+We cannot draw a conclusion when the result of a hypothesis test is non-significant because we haven't proven anything; we have only failed to disprove the null hypothesis. 
+
+For the purpose of this test, we made the assumption that John Hancock did, in fact, write the articles that appeared in the Boston Gazette in 1770 (as opposed to someone writing on his behalf). We also assume that if he *did* write the articles, that they are an accurate representation of *all* of his writing. Finally, and possibly most importantly, we assume that the metric "average word length"" is something that is unique to an individual and can be used to accurately identify someone as an author. 

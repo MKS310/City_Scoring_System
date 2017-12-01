@@ -1,0 +1,176 @@
+---
+title: "Assignment 8"
+author: "Maggie Schweihs"
+date: "10/25/2016"
+output: pdf_document
+---
+
+```{r, echo=FALSE}
+myBestCities <- read.csv("~/Documents/Code/DS710/ds710fall2016assignment8/myBestCities.csv", header=TRUE, row.names = 1, sep=",")
+attach(myBestCities)
+```
+
+##1. Pleasantness Score
+*In this problem, you will create and apply a function that rates cities based on how appealing they are for you to live in.*
+
+**Create an R function that computes the pleasantness score of a city, based on a vector of data about it.  You may assume that the vector contains data in the same order as it is listed in Best Cities.csv.**
+
+###Added Variables
+
+I started by adding a 5 rows of data to the dataset. This information was gathered from http://factfinder.census.gov/. The following are the added rows to "Best Cities.csv":
+
++ Employment Status: Armed Forces(2014)
++ Worked at Home (2014)
++ Number of establishments in the Information Industry (2012)
++ Number of workers in the information industry (2012)
++ Annual payroll for workers in the information industry(in $1000s)(2012)
++ InfoPay_Avg is the annual payroll (2014) divided by Number of workers in Information Industry
+
+I chose to add more data regarding people employed in the Armed Forces because I am currently a member of the National Guard. My assumption is that people who report the "Armed Forces" in their employment information are either members of the reserves or active military members. Either way, cities with a higher number of Armed Forces employees should be better suited for someone who is a member of the Armed Forces.
+
+I also added the number of people who reported that they worked at home as a key indicator of a pleasant place to live. I belive this number could indicate the level of work-life balance in certain areas.
+
+Finally, I added several measures of the "Information" Industry. I wanted to know which cities had the most establishments dedicated to the Information Industry, how many people were employed and the annual payroll for those employees. I used Annual payroll and number of workers in Information Industry to calculate the "InfoPay_Avg" column as an estimate of the average salary of people working in the Information Industry in that city.
+
+###Data Preparation
+
+I modified the "Best Cities.csv" and created "myBestCities.csv" for the purpose of running the scoring algorithm. First, I added the rows listed above. Second, I transposed the rows and columns so the variables were the columns and the cities were the rows. Thrid, I renamed the columns so they would be easier to call in the functions. Fourth, in excel, I converted all of the cells to "numeric" since I was receiveing type errors such as the following:
+
+*Warning message:
+In Ops.factor(InfoPay, InfoWorkers) : ‘/’ not meaningful for factors*
+```{r}
+colnames(myBestCities)
+rownames(myBestCities)
+```
+###Scoring
+
+I divided my scoring criteria into three main categories: Life Style, Information Industry, and Veteran/Armed Forces Friendly.
+
+Scoring parameters conform to the following naming convention:
+
++ Life Style = L_name
++ Information Industry = I_name
++ Veteran/Armed Forces Friendly = V_name
+
+Where *name* is a meaningful name for the parameter.
+
+For each parameter, the function takes the index of the city as its only input.
+
+**Life Style**
+
++ Rent: Lower is better
+```{r}
+L_rent <- function(x){ #begin L_rent: inverse of Rent
+  return(1/Rent[x]*1000)
+} #end L_rent
+```
+
++ Commute: Lower is better
+```{r}
+L_commute <- function(x){ #begin L_commute: inverse of commute
+  return(1/Commute[x]*10)
+} #end L_commute
+```
++ Population/sq. mile: Lower is better
+```{r}
+L_popDensity <- function(x){ #begin L_popDensity
+  return(1/PopSqMile[x]*1000)
+} #end L_popDensity
+```
++ Proportion of population that works at home: higher is better
+```{r}
+L_telework <- function(x){ #begin L_telework
+  return(WorkAtHome[x]/Pop[x]*10)
+} #end L_telework
+```
++ Median Value of Owner Occupied Homes: less than $250,000 is best
+```{r}
+L_homeVal <- function(x){ #begin L_homeVal
+  if( HomeValue[x] < 250000){
+    return(1)
+  }
+  else return(0)
+} #end L_homeVal
+```
+
+**Information Industry**
+
++ Proportion of workers in information industry: higher is better
+```{r}
+I_nerdPopDensity <- function(x){ #begin I_nerdPopDensity
+  return(InfoWorkers[x]/Pop[x]*10)
+} #end I_nerdPopDensity
+```
++ Average annual salary per employee in information industry: between $65,000 and $100,000 is best. 
+```{r}
+I_nerdPay <- function(x){ #begin I_nerdPay
+  if(InfoPay_Avg[i] > 65 && InfoPay_Avg[i] < 100){
+    return(1)
+  }
+  else return(0)
+} #end I_nerdPay
+```
+
+**Veteran/Armed Forces Friendly**
+
++ Proportion of population that is employed by Armed Forces: higher is better
+```{r}
+V_activeVets <- function(x){ #begin V_activevets
+  return(ArmedForces[x]/Pop[x]*1000)
+} #end V_activevets
+```
++ Proportion of Veteran owned Establishments to number of Veterans: higher is better
+```{r}
+V_productiveVets <- function(x){ #begin V_productiveVets
+  return(VetOwned[x]/Vets[x]*10)
+} #end V_productiveVets
+```
+
+###Create the Algorithm 
+```{r}
+#Function to Calculate Pleasantness Score
+Pleasant_score <- function(x){ #begin Pleasant function
+    #return(t(rowSums(scores)))
+    return(scores$L_rent[x] + scores$L_commute[x] + scores$L_popDensity[x] + scores$L_telework[x] + scores$I_nerdPopDensity[x] + scores$I_nerdPay[x] + scores$V_activeVets[x] + scores$V_productiveVets[x])
+}#end pleasant function
+```
+###Run the Test!!
+```{r}
+#Create a variable to hold the number of cities in the dataset
+num_cities = nrow(myBestCities)
+#Create a data frame to hold the scoring parameters
+scores <- data.frame(L_rent=numeric(num_cities), L_commute=numeric(num_cities), L_popDensity=numeric(num_cities), L_telework=numeric(num_cities), L_homeVal=numeric(num_cities), I_nerdPopDensity=numeric(num_cities), I_nerdPay=numeric(num_cities), V_activeVets=numeric(num_cities), V_productiveVets=numeric(num_cities),
+Pleasantness=numeric(num_cities))
+
+attach(scores)
+
+#Loop through each city in myBestCities to add row names and populate the scoring parameters 
+
+  for(i in 1:num_cities){ #begin loop 
+  row.names(scores)[i]       <- row.names(myBestCities)[i]
+  scores$L_rent[i]           <- L_rent(i)
+  scores$L_commute[i]        <- L_commute(i)
+  scores$L_popDensity[i]     <- L_popDensity(i)
+  scores$L_telework[i]       <- L_telework(i)
+  scores$L_homeVal[i]        <- L_homeVal(i)
+  scores$I_nerdPopDensity[i] <- I_nerdPopDensity(i)
+  scores$I_nerdPay[i]        <- I_nerdPay(i)
+  scores$V_activeVets[i]     <- V_activeVets(i)
+  scores$V_productiveVets[i] <- V_productiveVets(i)
+  scores$Pleasantness[i]     <- Pleasant_score(i)
+} 
+#apply(scores, 1, Pleasant_score)#end loop
+```
+
+**Below are all of the calculated parameters for the pleasantness score and the final score for each city:**
+
+```{r}
+print(scores)
+````
+###The Results are In!!
+```{r}
+scores[order(scores$Pleasantness, decreasing = TRUE),10, drop = FALSE]
+```
+I think this assessment seems accurrate. I am suprised that LA ranked higher than Madison due to the fact that I lowered the score for high population density and raised the score for bikeability. I was also suprised by Charlettesville, VA being my top rated city. I have never been there or heard anything about it, but after talking to some family and friends, it seemed to make sense to them, based on what they know about me.
+
+To make the algorithm more acurate, I would tweak the Life Style bucket parameters in the formula such as commute time score and the work at home score. 
